@@ -291,7 +291,6 @@ async function showProductView(chatId, productId, messageId) {
                     [{ text: `Chegirma: ${p.discount || 0}%`, callback_data: `update_field_discount_${productId}` }],
                     [{ text: `📅 Chegirma boshlanishi: ${startDateText}`, callback_data: `update_field_discountStart_${productId}` }],
                     [{ text: `📅 Chegirma tugashi: ${endDateText}`, callback_data: `update_field_discountEnd_${productId}` }],
-                    [{ text: `Stock: ${(p.stock || 0).toLocaleString()} dona`, callback_data: `update_field_stock_${productId}` }],
                     [{ text: `Tavsif: ${p.description ? p.description.substring(0, 20) + '...' : 'Yo\'q'}`, callback_data: `update_field_description_${productId}` }],
                     [{ text: `Rasm: ${p.image ? 'Bor' : 'Yo\'q'}`, callback_data: `update_field_image_${productId}` }],
                     [{ text: "🗑 Mahsulotni o'chirish", callback_data: `delete_product_${productId}` }],
@@ -304,7 +303,6 @@ async function showProductView(chatId, productId, messageId) {
             `• Chegirma: ${p.discount || 0}%\n` +
             `• Chegirma boshlanishi: ${startDateText}\n` +
             `• Chegirma tugashi: ${endDateText}\n` +
-            `• Stock: ${(p.stock || 0).toLocaleString()} dona\n` +
             `• Kategoriya: ${p.category}\n` +
             `• Tavsif: ${p.description || 'Belgilanmagan'}\n` +
             `• Rasm: ${p.image ? 'URL mavjud' : 'Yo\'q'}\n` +
@@ -475,7 +473,7 @@ async function handleCommand(chatId, text) {
             return;
         }
         userState[chatId] = { step: 'product_name', data: { categoryNames }, steps: [] };
-        bot.sendMessage(chatId, "1/8. Mahsulot nomini kiriting:", backKeyboard);
+        bot.sendMessage(chatId, "1/7. Mahsulot nomini kiriting:", backKeyboard);
         return;
     }
     if (text === "📂 Kategoriya qo'shish") {
@@ -578,16 +576,15 @@ async function handleProductStep(chatId, currentStep, isBack = false) {
     if (!isBack) state.steps.push(oldStep);
     state.step = currentStep;
     switch (currentStep) {
-        case 'product_name': bot.sendMessage(chatId, "1/8. Mahsulot nomini kiriting:", backKeyboard); break;
-        case 'product_price': bot.sendMessage(chatId, "2/8. Narxni so'mda kiriting (mas: 250000):", backKeyboard); break;
-        case 'product_discount': bot.sendMessage(chatId, "3/8. Chegirma (0-100, mas: 10 yoki 0):", backKeyboard); break;
+        case 'product_name': bot.sendMessage(chatId, "1/7. Mahsulot nomini kiriting:", backKeyboard); break;
+        case 'product_price': bot.sendMessage(chatId, "2/7. Narxni so'mda kiriting (mas: 250000):", backKeyboard); break;
+        case 'product_discount': bot.sendMessage(chatId, "3/7. Chegirma (0-100, mas: 10 yoki 0):", backKeyboard); break;
         case 'product_category':
             const kb = { reply_markup: { keyboard: [...data.categoryNames.map(n => [{ text: n }]), ["Orqaga"]], resize_keyboard: true, one_time_keyboard: true } };
-            bot.sendMessage(chatId, "4/8. Kategoriyani tanlang:", kb);
+            bot.sendMessage(chatId, "4/7. Kategoriyani tanlang:", kb);
             break;
-        case 'product_image': bot.sendMessage(chatId, "5/8. Rasm yuboring (photo formatida):", mainBackKeyboard); break;
-        case 'product_description': bot.sendMessage(chatId, "6/8. Tavsifni kiriting:", backKeyboard); break;
-        case 'product_stock': bot.sendMessage(chatId, "7/8. Ombordagi miqdor (mas: 50):", backKeyboard); break;
+        case 'product_image': bot.sendMessage(chatId, "5/7. Rasm yuboring (photo formatida):", mainBackKeyboard); break;
+        case 'product_description': bot.sendMessage(chatId, "6/7. Tavsifni kiriting:", backKeyboard); break;
     }
 }
 
@@ -640,7 +637,7 @@ bot.on('message', async (msg) => {
                 data.name = text;
                 state.steps.push(oldStep);
                 state.step = 'product_price';
-                bot.sendMessage(chatId, "2/8. Narxni so'mda kiriting (mas: 250000):", backKeyboard);
+                bot.sendMessage(chatId, "2/7. Narxni so'mda kiriting (mas: 250000):", backKeyboard);
                 break;
             case 'product_price':
                 const price = parseNumberInput(text);
@@ -648,7 +645,7 @@ bot.on('message', async (msg) => {
                 data.price = Math.floor(price);
                 state.steps.push(oldStep);
                 state.step = 'product_discount';
-                bot.sendMessage(chatId, "3/8. Chegirma (0-100, mas: 10 yoki 0):", backKeyboard);
+                bot.sendMessage(chatId, "3/7. Chegirma (0-100, mas: 10 yoki 0):", backKeyboard);
                 break;
             case 'product_discount':
                 if (!/^\d+$/.test(text) || parseInt(text) < 0 || parseInt(text) > 100) {
@@ -659,26 +656,20 @@ bot.on('message', async (msg) => {
                 state.steps.push(oldStep);
                 state.step = 'product_category';
                 const ckb = { reply_markup: { keyboard: data.categoryNames.map(n => [{ text: n }]).concat([["Orqaga"]]), resize_keyboard: true, one_time_keyboard: true } };
-                bot.sendMessage(chatId, "4/8. Kategoriyani tanlang:", ckb);
+                bot.sendMessage(chatId, "4/7. Kategoriyani tanlang:", ckb);
                 break;
             case 'product_category':
                 if (!data.categoryNames.includes(text)) { bot.sendMessage(chatId, "Tugmalardan tanlang!"); return; }
                 data.category = text;
                 state.steps.push(oldStep);
                 state.step = 'product_image';
-                bot.sendMessage(chatId, "5/8. Rasm yuboring (photo formatida):", mainBackKeyboard);
+                bot.sendMessage(chatId, "5/7. Rasm yuboring (photo formatida):", mainBackKeyboard);
                 break;
             case 'product_image': return;
             case 'product_description':
                 data.description = text;
-                state.steps.push(oldStep);
-                state.step = 'product_stock';
-                bot.sendMessage(chatId, "7/8. Ombordagi miqdor (mas: 50):", backKeyboard);
-                break;
-            case 'product_stock':
-                if (!/^\d+$/.test(text) || parseInt(text) < 0) { bot.sendMessage(chatId, "0 yoki musbat son!"); return; }
-                data.stock = parseInt(text);
-
+                
+                // Mahsulotni saqlash (stock siz)
                 const newId = await getNextId('products');
                 if (newId === -1) { bot.sendMessage(chatId, "❌ ID xato!", mainKeyboard); resetUserState(chatId); return; }
                 const newProduct = {
@@ -689,7 +680,6 @@ bot.on('message', async (msg) => {
                     category: data.category,
                     image: data.image,
                     description: data.description,
-                    stock: data.stock,
                 };
                 try {
                     await db.collection('products').doc(String(newId)).set(newProduct);
@@ -698,8 +688,7 @@ bot.on('message', async (msg) => {
                         `📦 ${newProduct.name}\n` +
                         `💰 ${newProduct.price.toLocaleString('uz-UZ')} so'm\n` +
                         `🏷 Chegirma: ${newProduct.discount}%\n` +
-                        `📂 ${newProduct.category}\n` +
-                        `📊 Stock: ${newProduct.stock} ta\n\n` +
+                        `📂 ${newProduct.category}\n\n` +
                         `Chegirma sanalari qo'shish uchun "Mahsulotni yangilash" → ushbu mahsulot → "Chegirma boshlanishi/tugashi" tugmalarini ishlating.`,
                         mainKeyboard
                     );
@@ -795,9 +784,6 @@ bot.on('message', async (msg) => {
             value = Math.floor(parsed);
         } else if (fieldType === 'discount') {
             if (!/^\d+$/.test(text) || parseInt(text) < 0 || parseInt(text) > 100) { bot.sendMessage(chatId, "0-100 oralig'ida!"); return; }
-            value = parseInt(text);
-        } else if (fieldType === 'stock') {
-            if (!/^\d+$/.test(text) || parseInt(text) < 0) { bot.sendMessage(chatId, "0 yoki musbat son!"); return; }
             value = parseInt(text);
         } else { bot.sendMessage(chatId, "Xato!"); resetUserState(chatId); return; }
         try {
@@ -945,7 +931,7 @@ bot.on('photo', async (msg) => {
             if (state.step === 'product_image') {
                 state.steps.push(state.step);
                 state.step = 'product_description';
-                bot.editMessageText("✅ Rasm yuklandi!\n6/8. Tavsifni kiriting:", { chat_id: chatId, message_id: waitMsg.message_id });
+                bot.editMessageText("✅ Rasm yuklandi!\n6/7. Tavsifni kiriting:", { chat_id: chatId, message_id: waitMsg.message_id });
                 bot.sendMessage(chatId, "Tavsif:", backKeyboard);
             } else {
                 try {
@@ -1172,7 +1158,7 @@ bot.on('callback_query', async (cq) => {
             bot.sendMessage(chatId, 'Yangi rasm yuboring:', mainBackKeyboard);
         } else {
             userState[chatId] = { step: 'update_value', data: { productId: id, field: fieldType, ...preserve }, steps: cur.steps || [] };
-            const labelMap = { price: 'Narx (so\'m)', discount: 'Chegirma (%)', stock: 'Stock' };
+            const labelMap = { price: 'Narx (so\'m)', discount: 'Chegirma (%)' };
             bot.sendMessage(chatId, `${labelMap[fieldType] || fieldType} uchun yangi qiymatni yuboring:`, backKeyboard);
         }
         bot.answerCallbackQuery(cq.id);
