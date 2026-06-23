@@ -90,8 +90,7 @@ router.post('/', checkAuth, async (req, res) => {
 
             const order = orderDoc.data();
 
-            // 🔴 totalUZS ni tekshirish
-            const expectedAmount = (order.totalUZS || order.total || 0) * 100; // so'm → tiyin
+            const expectedAmount = Math.round((order.totalUZS || order.total || 0) * 100); // so'm → tiyin
 
             if (params.amount !== expectedAmount) {
                 return res.json({
@@ -176,6 +175,18 @@ router.post('/', checkAuth, async (req, res) => {
                             ru: "Заказ не найден",
                             en: "Order not found"
                         }
+                    }
+                });
+            }
+
+            // Payme 12 soatlik limit (43200000 ms)
+            const TIMEOUT_MS = 12 * 60 * 60 * 1000;
+            if (Date.now() - params.time > TIMEOUT_MS) {
+                return res.json({
+                    id,
+                    error: {
+                        code: -31008,
+                        message: "Transaction timed out"
                     }
                 });
             }
@@ -377,6 +388,34 @@ router.post('/', checkAuth, async (req, res) => {
                     reason: trans.reason || null,
                 },
             });
+        }
+
+        // ─── GetStatement ────────────────────────────────────────────
+        if (method === 'GetStatement') {
+            const { from, to } = params;
+
+            const snapshot = await db.collection('payme_transactions')
+                .where('createTime', '>=', from)
+                .where('createTime', '<=', to)
+                .get();
+
+            const transactions = snapshot.docs.map(doc => {
+                const t = doc.data();
+                return {
+                    id: t.id,
+                    time: t.createTime,
+                    amount: t.amount,
+                    account: { orderId: t.orderId },
+                    create_time: t.createTime,
+                    perform_time: t.performTime || 0,
+                    cancel_time: t.cancelTime || 0,
+                    transaction: t.id,
+                    state: t.state,
+                    reason: t.reason || null,
+                };
+            });
+
+            return res.json({ id, result: { transactions } });
         }
 
         // ─── Unknown Method ──────────────────────────────────────────
